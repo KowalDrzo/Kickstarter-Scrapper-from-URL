@@ -44,6 +44,44 @@ while True:
         if '<button aria-label="Play video"' in html:
             startup.has_video = True
 
+        match = re.search(r'<div class="text-left mb3">(.*?) created<span class="divider">&nbsp;•&nbsp;</span>(.*?) backed</div>', html, re.DOTALL)
+        startup.author_created_number = match.group(1)
+        startup.author_backed_number = match.group(2)
+
+        driver.quit()
+
+        driver = webdriver.Firefox()
+        driver.get(f"{url}/creator")
+        time.sleep(0.1)
+        html = driver.page_source
+
+        match = re.search(r'<span class="kds-type kds-type-heading-sm">account created</span><span class="kds-type kds-type-heading-lg">(.*?)</span>', html, re.DOTALL)
+        startup.author_registration_date = match.group(1)
+
+        driver.quit()
+
+        driver = webdriver.Firefox()
+        driver.get(f"{url}/rewards")
+        time.sleep(0.1)
+        html = driver.page_source
+
+        reward_list = re.findall(r'<span class="type-12 support-500"><span class="semibold">(.*?)</span><span class="ml1">', html, re.DOTALL)
+
+        startup.rewards_num = len(reward_list)
+
+        if startup.rewards_num > 0:
+            min_reward = 999999
+            max_reward = 0
+
+            for reward in reward_list:
+                reward_int = int("".join(c for c in reward if c.isdigit()))
+                if reward_int < min_reward:
+                    min_reward = reward_int
+                if reward_int > max_reward:
+                    max_reward = reward_int
+
+            startup.lowest_reward = min_reward
+            startup.highest_reward = max_reward
 
         print(startup)
         startups.append(startup)
@@ -62,12 +100,3 @@ with open(output_file, "w") as f:
     for startup in startups:
         f.write(str(startup))
         f.write("\n")
-
-"""
-    author_created_number = ""
-    author_backed_number = ""
-    author_registration_date = ""
-    rewards_num = 0
-    lowest_reward = 0
-    highest_reward = 0
-"""
