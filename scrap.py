@@ -4,16 +4,28 @@ from startup_info import StartupInfo
 import re
 import time
 import selenium
+import sys
 
 startups = []
+input_file = ""
+urls = []
 
-while True:
+input_file = sys.argv[1]
+
+with open(input_file, "r") as f:
+    urls = f.readlines()
+
+timestamp = time.strftime("%Y%m%d_%H%M%S")
+output_file = f"startup_data_{timestamp}.txt"
+with open(output_file, "w") as f:
+    f.write("money_taken_local;money_taken_USD;planned_money_local;planned_money_USD;backers;updates;comments;has_video;author_created_number;author_backed_number;author_registration_date;rewards_num;lowest_reward;highest_reward\n")
+
+for url in urls:
 
     startup = StartupInfo()
 
-    url = input("URL (or q to end):")
-    if url == "q":
-        break
+    if "?" in url:
+        url = url.split("?")[0]
 
     try:
         driver = webdriver.Firefox()
@@ -56,7 +68,10 @@ while True:
         html = driver.page_source
 
         match = re.search(r'<span class="kds-type kds-type-heading-sm">account created</span><span class="kds-type kds-type-heading-lg">(.*?)</span>', html, re.DOTALL)
-        startup.author_registration_date = match.group(1)
+        try:
+            startup.author_registration_date = match.group(1)
+        except(AttributeError):
+            startup.author_registration_date = ""
 
         driver.quit()
 
@@ -85,18 +100,14 @@ while True:
 
         print(startup)
         startups.append(startup)
+
+        with open(output_file, "a") as f:
+            f.write(str(startup))
+            f.write("\n")
+
         driver.quit()
 
     except(selenium.common.exceptions.InvalidArgumentException):
         print("Bad URL")
         driver.quit()
         continue
-
-timestamp = time.strftime("%Y%m%d_%H%M%S")
-output_file = f"startup_data_{timestamp}.txt"
-with open(output_file, "w") as f:
-
-    f.write("header TODO\n")
-    for startup in startups:
-        f.write(str(startup))
-        f.write("\n")

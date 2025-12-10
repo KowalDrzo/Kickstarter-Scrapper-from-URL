@@ -33,4 +33,5 @@ class StartupInfo:
         startup_str += str(self.lowest_reward) + ";"
         startup_str += str(self.highest_reward)
 
+        startup_str = startup_str.replace(",", "")
         return startup_str
